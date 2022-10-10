@@ -1,0 +1,24 @@
+{% extends 'users/base.html' %}
+
+{% block body %}
+<div class="container mt-5">
+    <h2>Responses</h2>
+    <div class="list-group">
+      {% if responses %}
+        {% for response in responses %}
+          <div class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">From: {{ response.employee }}</h5>
+              <small class="text-muted">{{ response.date_time }}</small>
+            </div>
+              <p>Booking Details: {{ response.feedback.booking }}</p>
+              <p>Response to: {{ response.feedback.comment }}</p>
+              <p>Response: {{ response.response }}</p>
+        </div>
+          {% endfor %}
+          {% else %}
+          <h5>Yay! There are currently no complaints!</h5>
+          {% endif %}       
+    </div>
+</div>
+{% endblock body %}

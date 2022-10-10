@@ -1,0 +1,26 @@
+{% extends 'users/base.html' %}
+
+{% block body %}
+<div class="container mt-5">
+    <h2>History</h2>
+    <div class="list-group">
+        {% for booking in bookings %}
+          <div class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">Parking Lot {{ booking.parking_spot }}</h5>
+              <small class="text-muted">{{ booking.date }}, {{ booking.booking_time }}</small>  
+            </div>
+              <p>Booked by: {{ booking.customer }}</p>
+              <p>Vehicle: {{ booking.vehicle.licence_no }}  {{ booking.vehicle.vehicle_type }}</p>
+              {% if booking.is_active %}
+                <p>{{ booking.start_time }} - Now</p>
+              {% elif not booking.end_time %}
+                <p>This booking was cancelled </p>
+              {% else %}
+                <p> From: {{ booking.start_time }} To: {{ booking.end_time }}</p>
+              {% endif %}
+          </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock body %}

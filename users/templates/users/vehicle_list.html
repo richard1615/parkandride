@@ -1,0 +1,20 @@
+{% extends 'users/base.html' %}
+
+{% block body %}
+<div class="container mt-5">
+    <h2>Your Vehicles</h2>
+    <a href="{% url 'add-vehicle' %}" class="m-3 btn btn-primary">Add a new vehicle</a>
+    <div class="list-group">
+        {% for vehicle in vehicles %}
+          <div class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">{{ vehicle.name }}</h5>
+              <small class="text-muted">{{ vehicle.date }}, {{ vehicle.vehicle_time }}</small>  
+            </div>
+              <p>License No: {{ vehicle.license_no }}</p>
+              <p>Type: {{ vehicle.vehicle_type }}</p>
+          </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock body %}

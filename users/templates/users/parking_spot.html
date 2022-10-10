@@ -1,0 +1,36 @@
+{% extends 'users/base.html' %}
+
+{% block body %}
+    <div class="container">
+        <h2>{{ parking_spot }}</h2>
+        {% if parking_spot.is_reserved %}
+        <div class="alert alert-danger" role="alert">
+            This parking lot is currently occupied
+        </div>
+        {% else %}
+        <div class="alert alert-success" role="alert">
+            This parking lot is currently available
+        </div>          
+        {% endif %}
+
+        <h3>History</h3>
+
+        {% for booking in bookings %}
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ booking.user }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ booking.date }}</h6>
+                    {% if booking.end_time %}
+                        <h6 class="card-subtitle mb-2 text-muted">{{ booking.start_time }} - {{ booking.end_time }}</h6>
+                    {% elif booking.is_active %}
+                        <h6 class="card-subtitle mb-2 text-muted">{{ booking.start_time }} - ongoing</h6>
+                    {% else %}
+                        <h6 class="card-subtitle mb-2 text-muted">Booking was cancelled</h6>
+                    {% endif %}
+                    <p class="card-text">{{ booking.date }}</p>
+                </div>
+            </div>
+        {% endfor %}
+
+    </div>
+{% endblock body %}

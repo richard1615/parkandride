@@ -1,0 +1,27 @@
+{% extends 'users/base.html' %}
+
+{% block body %}
+<div class="container mt-5">
+    <h2>Feedbacks</h2>
+    <div class="list-group">
+      {% if feedbacks %}
+        {% for feedback in feedbacks %}
+          <a href="{% url 'create-response' feedback.id %}" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">{{ feedback.booking.parking_spot }}</h5>
+              <small class="text-muted">{{ feedback.date_time }}</small>
+            </div>
+              {% if not feedback.booking.end_time %}
+                <p>The booking was cancelled </p>
+              {% else %}
+                <p> From: {{ feedback.booking.start_time }} To: {{ feedback.booking.end_time }}</p>
+              {% endif %}
+              <p>{{ feedback.comment }}</p>
+          </a>
+          {% endfor %}
+          {% else %}
+          <h5>Yay! There are currently no complaints!</h5>
+          {% endif %}       
+    </div>
+</div>
+{% endblock body %}

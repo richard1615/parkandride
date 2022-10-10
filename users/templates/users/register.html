@@ -1,0 +1,13 @@
+{% extends 'users/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block body %}
+<div class="container mt-3">
+    <form method='post' >
+        {% csrf_token %}
+        {{ form|crispy }}
+        <input type='submit' value='Submit' class="btn btn-primary"/>
+    </form>
+    <h6>Already logged in? Login <a href="{% url 'login' %}">here</a></h6>
+</div>
+{% endblock body %}
