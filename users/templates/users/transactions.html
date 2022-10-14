@@ -1,26 +1,41 @@
-{% extends 'users/base.html' %}
-
+{% extends "users/base.html" %}
 {% block body %}
-<div class="container mt-5">
-    <h2>History</h2>
-    <div class="list-group">
-        {% for booking in bookings %}
-          <div class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-              <h5 class="mb-1">Parking Lot {{ booking.parking_spot }}</h5>
-              <small class="text-muted">{{ booking.date }}, {{ booking.booking_time }}</small>  
-            </div>
-              <p>Booked by: {{ booking.customer }}</p>
-              <p>Vehicle: {{ booking.vehicle.licence_no }}  {{ booking.vehicle.vehicle_type }}</p>
-              {% if booking.is_active %}
-                <p>{{ booking.start_time }} - Now</p>
-              {% elif not booking.end_time %}
-                <p>This booking was cancelled </p>
-              {% else %}
-                <p> From: {{ booking.start_time }} To: {{ booking.end_time }}</p>
-              {% endif %}
-          </div>
-        {% endfor %}
+    <div class="container mt-5">
+        <h2>History</h2>
+        <div class="list-group">
+            {% for booking in bookings %}
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">Parking Lot {{ booking.parking_spot }}</h5>
+                        <small class="text-muted">{{ booking.date }}, {{ booking.booking_time }}</small>
+                    </div>
+                    <p>Booked by: {{ booking.customer }}</p>
+                    <p>Vehicle: {{ booking.vehicle.licence_no }}  {{ booking.vehicle.vehicle_type }}</p>
+                    {% if booking.is_active %}
+                        <p>{{ booking.start_time }} - Now</p>
+                    {% elif not booking.end_time %}
+                        <p>This booking was cancelled</p>
+                    {% else %}
+                        <p>From: {{ booking.start_time }} To: {{ booking.end_time }}</p>
+                    {% endif %}
+                    <p>Amount: {{ booking.amount }}</p>
+                    {% if user.is_customer %}
+                        <a href="{% url 'feedback-create' booking.id %}">Not satisfied? Let us know</a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            {# .... **Now the pagination section** .... #}
+            {% if is_paginated %}
+                <div class="pagination">
+                    <span class="page-links">
+                        {% if page_obj.has_previous %}
+                            <a href="/business/transactions/?page={{ page_obj.previous_page_number }}">previous</a>
+                        {% endif %}
+                        <span class="page-current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.</span>
+                        {% if page_obj.has_next %}<a href="/business/transactions/?page={{ page_obj.next_page_number }}">next</a>{% endif %}
+                    </span>
+                </div>
+            {% endif %}
+        </div>
     </div>
-</div>
 {% endblock body %}

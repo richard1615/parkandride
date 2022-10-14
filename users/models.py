@@ -1,9 +1,12 @@
 import datetime
+from email.policy import default
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-#cancellation fee: 20
-#occupy fee: 30 per hour
+
+waiting_fee = 5 #per half an hour
+parking_fee = 5 #per hour
+cancellation_fee = 10 #no of hours after cancelling
 
 
 class User(AbstractUser):
@@ -14,6 +17,7 @@ class User(AbstractUser):
 class Customer(models.Model):
 	user = models.OneToOneField(
 		User, on_delete=models.CASCADE, related_name="customer")
+	#wallet = models.IntegerField(default=50)
 	has_booked = models.BooleanField(default=False)
 	has_occupied = models.BooleanField(default=False)
  
@@ -45,6 +49,10 @@ class ParkingSpot(models.Model):
 	is_reserved = models.BooleanField(default=False)
 	vehicle_type = models.CharField(max_length=50, choices=[('car', "Car"), ('two wheeler', "Two Wheeler")], default='car')
 
+	def leave(self):
+		self.is_reserved = False
+		self.save()
+
 	def __str__(self) -> str:
 		return f"{self.row}{self.column}"
 
@@ -59,9 +67,37 @@ class Booking(models.Model):
 	is_active = models.BooleanField(default=True)
 	parking_spot = models.ForeignKey(ParkingSpot, related_name="bookings", on_delete=models.CASCADE)
 	vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name="vehicle", null=True, blank=False)
+	amount = models.IntegerField(default=0)
 
 	def __str__(self):
 		return f'{self.customer} {self.date} {self.parking_spot}'
+
+	def close(self):
+		self.is_active = False
+		self.end_time = datetime.datetime.now().time()
+		self.save()
+
+	def cancel(self):
+		self.end_time = datetime.datetime.now().time()
+		self.is_active = False
+		self.save()
+
+	def setAmount(self):
+		if self.start_time:
+			start_time = datetime.datetime.combine(datetime.date.today(), self.start_time)
+			end_time = datetime.datetime.combine(datetime.date.today(), self.end_time)
+			duration = end_time - start_time
+			duration_in_s = duration.total_seconds()
+			duration_in_hours = divmod(duration_in_s, 3600)[0]
+			self.amount = duration_in_hours * parking_fee
+		else:
+			start_time = datetime.datetime.combine(datetime.date.today(), self.booking_time)
+			end_time = datetime.datetime.combine(datetime.date.today(), self.end_time)
+			duration = end_time - start_time
+			duration_in_s = duration.total_seconds()
+			duration_in_hours = divmod(duration_in_s, 3600)[0]
+			self.amount = duration_in_hours * waiting_fee
+		self.save()
 	
 
 

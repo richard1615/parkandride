@@ -5,10 +5,12 @@ from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.urls import reverse
+from django.contrib import messages
 
 
 from .models import Booking, Feedback, ParkingSpot, Feedback, Response, Vehicle
 from .forms import UserRegisterForm, SearchParkingLotForm, BookingForm
+
 
 @login_required(login_url='login')
 def index(request):
@@ -16,15 +18,17 @@ def index(request):
         return redirect('transactions')
     else:
         customer = request.user.customer
-        bookings = customer.bookings.filter(is_active=False).order_by('-date', '-booking_time')
+        bookings = customer.bookings.filter(
+            is_active=False).order_by('-date', '-booking_time')
         current_booking = customer.bookings.filter(is_active=True).first()
 
         return render(request, "users/index.html", {
-            "customer": customer, 
+            "customer": customer,
             "bookings": bookings,
             "current_booking": current_booking,
-            "vehicle_form": BookingForm()
+            "vehicle_form": BookingForm(user=request.user)
         })
+
 
 @login_required(login_url='login')
 def parking_lots(request):
@@ -33,26 +37,34 @@ def parking_lots(request):
         "spots": spots,
     })
 
+
 @login_required(login_url='login')
 def book(request):
     if request.method == 'POST':
         customer = request.user.customer
-        form = BookingForm(request.POST)
+        form = BookingForm(request.POST, user=request.user)
         if form.is_valid():
             vehicle = form.cleaned_data["vehicle"]
-        customer.has_booked = True
-        customer.save()
-        spot = ParkingSpot.objects.filter(is_reserved=False, vehicle_type=vehicle.vehicle_type).first()
-        spot.is_reserved = True
-        spot.save()
-        booking = Booking.objects.create(
-            customer=customer,
-            date=datetime.date.today(),
-            booking_time=datetime.datetime.now().time(),
-            parking_spot = spot,
-            vehicle=vehicle
-        )
+        spot = ParkingSpot.objects.filter(
+            is_reserved=False, vehicle_type=vehicle.vehicle_type).first()
+        if spot:
+            customer.has_booked = True
+            customer.save()
+            spot.is_reserved = True
+            spot.save()
+            Booking.objects.create(
+                customer=customer,
+                date=datetime.date.today(),
+                booking_time=datetime.datetime.now().time(),
+                parking_spot=spot,
+                vehicle=vehicle
+            )
+            messages.success(request, "Parking lot allotted succesfully")
+        else:
+            messages.error(
+                request, "No parking spot available for your vehicle type")
     return redirect("index")
+
 
 @login_required(login_url='login')
 def occupy(request, id):
@@ -61,9 +73,10 @@ def occupy(request, id):
     customer.has_occupied = True
     customer.save()
     booking.is_active = True
-    booking.start_time=datetime.datetime.now().time()
+    booking.start_time = datetime.datetime.now().time()
     booking.save()
     return redirect("index")
+
 
 @login_required(login_url='login')
 def leave(request, id):
@@ -72,13 +85,12 @@ def leave(request, id):
     customer.has_occupied = False
     customer.save()
     booking = Booking.objects.get(id=id)
-    booking.is_active = False
-    booking.end_time = datetime.datetime.now().time()
-    booking.save()
+    booking.close()
+    booking.setAmount()
     spot = booking.parking_spot
-    spot.is_reserved = False
-    spot.save()
+    spot.leave()
     return redirect("index")
+
 
 @login_required(login_url='login')
 def cancel(request, id):
@@ -87,12 +99,12 @@ def cancel(request, id):
     customer.has_occupied = False
     customer.save()
     booking = Booking.objects.get(id=id)
-    booking.is_active = False
-    booking.save()
+    booking.cancel()
+    booking.setAmount()
     spot = booking.parking_spot
-    spot.is_reserved = False
-    spot.save()
+    spot.leave()
     return redirect("index")
+
 
 def register(request):
     if request.method == 'POST':
@@ -105,18 +117,19 @@ def register(request):
     return render(request, 'users/register.html', {'form': form})
 
 
-class BookingListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+class BookingListView(LoginRequiredMixin, ListView):
     model = Booking
     template_name = "users/transactions.html"
     context_object_name = "bookings"
     login_url = 'login/'
     redirect_field_name = 'redirect_to'
+    paginate_by = 5
 
     def get_queryset(self):
-        return Booking.objects.order_by('-date', '-booking_time')
-
-    def test_func(self):
-        return self.request.user.is_employee
+        if self.request.user.is_employee:
+            return Booking.objects.order_by('-date', '-booking_time')
+        else:
+            return Booking.objects.filter(customer=self.request.user.customer).order_by('-date', '-booking_time')
 
 
 class ParkingSpotDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
@@ -128,7 +141,8 @@ class ParkingSpotDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView)
 
     def get_context_data(self, **kwargs):
         context = super(ParkingSpotDetailView, self).get_context_data(**kwargs)
-        bookings = ParkingSpot.objects.get(id=self.kwargs['pk']).bookings.order_by('-date', '-booking_time')
+        bookings = ParkingSpot.objects.get(
+            id=self.kwargs['pk']).bookings.order_by('-date', '-booking_time')
         context['bookings'] = bookings
         return context
 
@@ -144,12 +158,13 @@ def search_parking_spot(request):
         if form.is_valid():
             row = form.cleaned_data["row"]
             column = form.cleaned_data["column"]
-            parking_lot = ParkingSpot.objects.filter(row=row, column=column).first()
+            parking_lot = ParkingSpot.objects.filter(
+                row=row, column=column).first()
             return redirect("parking-spot", pk=parking_lot.id)
     return render(request, "users/search_parking_spot.html", {"form": SearchParkingLotForm()})
 
 
-class FeedbackCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView): #Customer
+class FeedbackCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):  # Customer
     model = Feedback
     template_name = "users/feedback.html"
     fields = ["comment"]
@@ -168,7 +183,7 @@ class FeedbackCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView): #
         return reverse('index')
 
 
-class FeedbackListView(LoginRequiredMixin, UserPassesTestMixin, ListView): #Employee
+class FeedbackListView(LoginRequiredMixin, UserPassesTestMixin, ListView):  # Employee
     model = Feedback
     template_name = "users/feedback_list.html"
     context_object_name = "feedbacks"
@@ -182,7 +197,7 @@ class FeedbackListView(LoginRequiredMixin, UserPassesTestMixin, ListView): #Empl
         return self.request.user.is_employee
 
 
-class ResponseCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView): #Employee
+class ResponseCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):  # Employee
     model = Response
     fields = ["response"]
     template_name = "users/create_response.html"
@@ -205,7 +220,7 @@ class ResponseCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView): #
         return reverse('feedback-list')
 
 
-class ResponseListView(LoginRequiredMixin, UserPassesTestMixin, ListView): #Customer
+class ResponseListView(LoginRequiredMixin, UserPassesTestMixin, ListView):  # Customer
     model = Response
     template_name = "users/response_list.html"
     context_object_name = "responses"
@@ -235,7 +250,7 @@ class VehicleCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     def get_success_url(self) -> str:
         return reverse('vehicles')
 
-    
+
 class VehicleListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Vehicle
     login_url = 'login/'
@@ -244,6 +259,6 @@ class VehicleListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
     def get_queryset(self):
         return Vehicle.objects.filter(customer=self.request.user.customer)
-    
+
     def test_func(self):
         return self.request.user.is_customer
