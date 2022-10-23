@@ -26,7 +26,7 @@ def index(request):
             "customer": customer,
             "bookings": bookings,
             "current_booking": current_booking,
-            "vehicle_form": BookingForm(user=request.user)
+            "vehicle_form": BookingForm()
         })
 
 
@@ -42,9 +42,11 @@ def parking_lots(request):
 def book(request):
     if request.method == 'POST':
         customer = request.user.customer
-        form = BookingForm(request.POST, user=request.user)
+        form = BookingForm(request.POST)
         if form.is_valid():
             vehicle = form.cleaned_data["vehicle"]
+        else:
+            return form.errors.as_data()
         spot = ParkingSpot.objects.filter(
             is_reserved=False, vehicle_type=vehicle.vehicle_type).first()
         if spot:
@@ -131,6 +133,14 @@ class BookingListView(LoginRequiredMixin, ListView):
         else:
             return Booking.objects.filter(customer=self.request.user.customer).order_by('-date', '-booking_time')
 
+class BookingDetailView(LoginRequiredMixin, DetailView):
+    model = Booking
+    template_employee_name = "users/transaction_detail.html"
+    template_user_name = "users/booking_detail.html"
+    context_object_name = "booking"
+    login_url = 'login/'
+    redirect_field_name = 'redirect_to'
+    
 
 class ParkingSpotDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = ParkingSpot

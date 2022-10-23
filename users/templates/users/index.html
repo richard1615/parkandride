@@ -35,7 +35,7 @@
               <button class="btn btn-danger">Leave</button>
             </a>
           {% elif customer.has_booked %}
-            <h5 class="mb-1">Parking Lot {{ current_booking.parking_spot }}</h5>
+            <h5 class="mb-1">Please go to parking lot {{ current_booking.parking_spot }}</h5>
             <a href="{% url 'occupy' current_booking.id %}">
               <button class="btn btn-primary">Occupy</button>
             </a>

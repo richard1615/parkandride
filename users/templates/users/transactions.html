@@ -1,30 +1,41 @@
 {% extends "users/base.html" %}
+{% load static %}
+
 {% block body %}
     <div class="container mt-5">
         <h2>History</h2>
         <div class="list-group">
             {% for booking in bookings %}
-                <div class="list-group-item">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">Parking Lot {{ booking.parking_spot }}</h5>
-                        <small class="text-muted">{{ booking.date }}, {{ booking.booking_time }}</small>
+                <a class="list-group-item list-group-item-action" href="{% if user.is_customer %}{% url 'booking-detail' booking.id %}{% endif %}">
+                    <div class="d-flex w-100 justify-content-start">
+                        <div class="m-3">
+                            {% if booking.vehicle.vehicle_type == 'car' %}
+                                <img src="{% static 'users/car.jpg' %}" alt="Car image"/>
+                            {% else %}
+                                <img src="{% static 'users/twowheeler.jpg' %}" alt="two wheeler image"/>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Parking Lot {{ booking.parking_spot }}</h5>
+                            <small class="text-muted">{{ booking.date }}, {{ booking.booking_time }}</small>
+                            <p class="text-muted">₹{{ booking.amount }}</p>
+                            {% if user.is_employee %}
+                                <div>
+                                    <p>Booked by: {{ booking.customer }}</p>
+                                </div>
+                                {% if booking.start_time %}
+                                    <h6 class="card-subtitle mb-2 text-muted">{{ booking.start_time }} - {{ booking.end_time }}</h6>
+                                {% elif booking.is_active %}
+                                    <h6 class="card-subtitle mb-2 text-muted">{{ booking.start_time }} - ongoing</h6>
+                                {% else %}
+                                    <h6 class="card-subtitle mb-2 text-muted">Booking was cancelled</h6>
+                                {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
-                    <p>Booked by: {{ booking.customer }}</p>
-                    <p>Vehicle: {{ booking.vehicle.licence_no }}  {{ booking.vehicle.vehicle_type }}</p>
-                    {% if booking.is_active %}
-                        <p>{{ booking.start_time }} - Now</p>
-                    {% elif not booking.end_time %}
-                        <p>This booking was cancelled</p>
-                    {% else %}
-                        <p>From: {{ booking.start_time }} To: {{ booking.end_time }}</p>
-                    {% endif %}
-                    <p>Amount: {{ booking.amount }}</p>
-                    {% if user.is_customer %}
-                        <a href="{% url 'feedback-create' booking.id %}">Not satisfied? Let us know</a>
-                    {% endif %}
-                </div>
+                    </a>
             {% endfor %}
-            {# .... **Now the pagination section** .... #}
+            </div>
             {% if is_paginated %}
                 <div class="pagination">
                     <span class="page-links">
@@ -36,6 +47,5 @@
                     </span>
                 </div>
             {% endif %}
-        </div>
     </div>
 {% endblock body %}

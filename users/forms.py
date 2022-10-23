@@ -1,6 +1,5 @@
 from django.contrib.auth.forms import UserCreationForm
 from django import forms
-from django.forms import ModelForm
 
 from .models import User, Booking, Vehicle
 
@@ -21,8 +20,4 @@ class BookingForm(forms.ModelForm):
     class Meta:
         model = Booking
         fields = ["vehicle"]
-            
-    def __init__(self, user=None, **kwargs):
-        super(BookingForm, self).__init__(**kwargs)
-        if user:
-            self.fields['vehicle'].queryset = Vehicle.objects.filter(customer=user.customer)
+    

@@ -6,7 +6,7 @@ from django.contrib.auth.models import AbstractUser
 
 waiting_fee = 5 #per half an hour
 parking_fee = 5 #per hour
-cancellation_fee = 10 #no of hours after cancelling
+cancellation_fee = 10 #no of hours before cancelling
 
 
 class User(AbstractUser):
@@ -20,6 +20,7 @@ class Customer(models.Model):
 	#wallet = models.IntegerField(default=50)
 	has_booked = models.BooleanField(default=False)
 	has_occupied = models.BooleanField(default=False)
+	#is_pending = models.BooleanField(default=False)
  
 	def __str__(self) -> str:
 		return self.user.username
@@ -68,6 +69,7 @@ class Booking(models.Model):
 	parking_spot = models.ForeignKey(ParkingSpot, related_name="bookings", on_delete=models.CASCADE)
 	vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name="vehicle", null=True, blank=False)
 	amount = models.IntegerField(default=0)
+	#is_paid = models.BooleanField(default=False)
 
 	def __str__(self):
 		return f'{self.customer} {self.date} {self.parking_spot}'

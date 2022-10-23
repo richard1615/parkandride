@@ -18,5 +18,6 @@ urlpatterns = [
     path('responses', views.ResponseListView.as_view(), name="responses"),
     path('business/response/<pk>', views.ResponseCreateView.as_view(), name="create-response"),
     path('vehicles', views.VehicleListView.as_view(), name='vehicles'),
-    path("add-vehicle/", views.VehicleCreateView.as_view(), name="add-vehicle")
+    path("add-vehicle/", views.VehicleCreateView.as_view(), name="add-vehicle"),
+    path("booking/<pk>", views.BookingDetailView.as_view(), name="booking-detail"),
 ]
