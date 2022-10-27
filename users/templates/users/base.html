@@ -12,18 +12,35 @@
     <link rel="stylesheet" href="{% static 'users/styles.css' %}">
     <title>Document</title>
     <style>
+      .navbar-nav{
+        display:flex;
+        flex-direction: row;
+        margin-right: 0px;
+        margin-left: 800px;
+        
+      }
+
+      body{
+        background-image: url("{% static 'users/3.jpg'%}");
+        background-repeat: no-repeat;
+        background-size:cover;
+        background-position: center center;
+        background-attachment: fixed;
+        height: 100%;
+        opacity: 1;
+      }
       a {
-        color: black;
+        color: white;
         text-decoration: none; 
     }    
     </style>
 </head>
 
-<body>
+<body >
     {% block navbar %}
     <nav class="navbar navbar-expand-lg navbar-bg-light">
       <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'index' %}">Park and Ride</a>
+        <a class="navbar-brand" href="{% url 'index' %}"style="color: white"><h1>PARK AND RIDE</h1></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -32,17 +49,17 @@
               {% if user.is_authenticated %}
                 {% if user.is_employee %}
                   <a class="nav-link mr-auto" href="{% url 'transactions' %}">Bookings</a>
-                  <a class="nav-link mr-auto" href="{% url 'search-parking-spot' %}">Parking Spots</a>
+                  <a class="nav-link mr-auto" href="{% url 'search-parking-spot' %}" style="color: white">Parking Spots</a>
                   <a class="nav-link mr-auto" href="{% url 'feedback-list' %}">Feedback</a> 
                 {% else %}
-                  <a class="nav-link mr-auto" href="{% url 'transactions' %}">Previous bookings</a>
-                  <a class="nav-link mr-auto" href="{% url 'responses' %}">Responses</a> 
-                  <a class="nav-link mr-auto" href="{% url 'vehicles' %}">Your Vehicles</a>
+                  <a class="nav-link mr-auto" href="{% url 'transactions' %}"style="color: white">Previous bookings</a>
+                  <a class="nav-link mr-auto" href="{% url 'responses' %}"style="color: white">Responses</a> 
+                  <a class="nav-link mr-auto" href="{% url 'vehicles' %}"style="color: white">Your Vehicles</a>
                 {% endif %}
-                <a class="nav-link mr-auto" href="{% url 'logout' %}">Logout</a>
+                <a class="nav-link mr-auto" href="{% url 'logout' %}"style="color: white">Logout</a>
               {% else %}
-                <a class="nav-link mr-auto" href="{% url 'login' %}">Login</a>
-                <a class="nav-link mr-auto" href="{% url 'register' %}">Register</a>
+                <a class="nav-link mr-auto" href="{% url 'login' %}" style="color: white">Login</a>
+                <a class="nav-link mr-auto" href="{% url 'register' %}" style="color: white">Register</a>
               {% endif %}
           </div>
         </div>
