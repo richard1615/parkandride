@@ -1,7 +1,8 @@
 from django.contrib.auth.forms import UserCreationForm
 from django import forms
 
-from .models import User, Booking, Vehicle
+
+from .models import User, Booking, Price
 
 class UserRegisterForm(UserCreationForm): 
 
@@ -20,4 +21,10 @@ class BookingForm(forms.ModelForm):
     class Meta:
         model = Booking
         fields = ["vehicle"]
+        
     
+class PriceForm(forms.ModelForm):
+    
+    class Meta:
+        model = Price
+        fields = ["waiting_fee", "parking_fee", "cancellation_fee"]

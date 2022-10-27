@@ -20,4 +20,5 @@ urlpatterns = [
     path('vehicles', views.VehicleListView.as_view(), name='vehicles'),
     path("add-vehicle/", views.VehicleCreateView.as_view(), name="add-vehicle"),
     path("booking/<pk>", views.BookingDetailView.as_view(), name="booking-detail"),
+    path("business/setprice", views.PriceSetView.as_view(), name="set-price"),
 ]

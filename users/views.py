@@ -8,8 +8,8 @@ from django.urls import reverse
 from django.contrib import messages
 
 
-from .models import Booking, Feedback, ParkingSpot, Feedback, Response, Vehicle
-from .forms import UserRegisterForm, SearchParkingLotForm, BookingForm
+from .models import Booking, Feedback, ParkingSpot, Feedback, Response, Vehicle, Price
+from .forms import UserRegisterForm, SearchParkingLotForm, BookingForm, PriceForm
 
 
 @login_required(login_url='login')
@@ -272,3 +272,20 @@ class VehicleListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
     def test_func(self):
         return self.request.user.is_customer
+
+
+class PriceSetView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Price
+    login_url = 'login/'
+    redirect_field_name = 'redirect_to'
+
+    def test_func(self):
+        return self.request.user.is_employee
+
+    def get_success_url(self) -> str:
+        return reverse('set-price')
+
+    def get_context_data(self, **kwargs):
+        context = super(PriceSetView, self).get_context_data(**kwargs)
+        context['form'] = PriceForm()
+        return super().get_context_data(**kwargs)

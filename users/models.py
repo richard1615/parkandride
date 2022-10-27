@@ -1,5 +1,4 @@
 import datetime
-from email.policy import default
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
@@ -14,16 +13,28 @@ class User(AbstractUser):
 	is_employee = models.BooleanField(default=False)
 
 
+class Price(models.Model):
+	waiting_fee = models.IntegerField(default=waiting_fee)
+	parking_fee = models.IntegerField(default=parking_fee)
+	cancellation_fee = models.IntegerField(default=cancellation_fee)
+	date = models.DateField(default=datetime.datetime.today())
+
+
 class Customer(models.Model):
 	user = models.OneToOneField(
 		User, on_delete=models.CASCADE, related_name="customer")
-	#wallet = models.IntegerField(default=50)
 	has_booked = models.BooleanField(default=False)
 	has_occupied = models.BooleanField(default=False)
-	#is_pending = models.BooleanField(default=False)
  
 	def __str__(self) -> str:
 		return self.user.username
+
+
+class Prices(models.Model):
+	waiting_fee = models.IntegerField(default=waiting_fee)
+	parking_fee = models.IntegerField(default=parking_fee)
+	cancellation_fee = models.IntegerField(default=cancellation_fee)
+	date = models.DateField(default=datetime.date.today)
 
 
 class Employee(models.Model):
@@ -66,10 +77,10 @@ class Booking(models.Model):
 	start_time = models.TimeField(null = True, blank = True)
 	end_time = models.TimeField(null = True, blank = True)
 	is_active = models.BooleanField(default=True)
+	is_cancelled = models.BooleanField(default=False)
 	parking_spot = models.ForeignKey(ParkingSpot, related_name="bookings", on_delete=models.CASCADE)
 	vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name="vehicle", null=True, blank=False)
 	amount = models.IntegerField(default=0)
-	#is_paid = models.BooleanField(default=False)
 
 	def __str__(self):
 		return f'{self.customer} {self.date} {self.parking_spot}'
@@ -84,24 +95,33 @@ class Booking(models.Model):
 		self.is_active = False
 		self.save()
 
-	def setAmount(self):
-		if self.start_time:
-			start_time = datetime.datetime.combine(datetime.date.today(), self.start_time)
-			end_time = datetime.datetime.combine(datetime.date.today(), self.end_time)
-			duration = end_time - start_time
-			duration_in_s = duration.total_seconds()
-			duration_in_hours = divmod(duration_in_s, 3600)[0]
-			self.amount = duration_in_hours * parking_fee
+	
+	def calculate_amount(self):
+		fee_obj = Prices.objects.last()
+		waiting_fee = fee_obj.waiting_fee
+		parking_fee = fee_obj.parking_fee
+		cancellation_fee = fee_obj.cancellation_fee
+		if self.is_cancelled:
+			self.amount = cancellation_fee
 		else:
-			start_time = datetime.datetime.combine(datetime.date.today(), self.booking_time)
-			end_time = datetime.datetime.combine(datetime.date.today(), self.end_time)
-			duration = end_time - start_time
-			duration_in_s = duration.total_seconds()
-			duration_in_hours = divmod(duration_in_s, 3600)[0]
-			self.amount = duration_in_hours * waiting_fee
+			if self.start_time:
+				start_time = datetime.datetime.combine(datetime.date.today(), self.start_time)
+				end_time = datetime.datetime.combine(datetime.date.today(), self.end_time)
+				time_diff = end_time - start_time
+				time_diff = time_diff.total_seconds()
+				time_diff = time_diff/3600
+				time_diff = int(time_diff)
+				self.amount += parking_fee*time_diff
+			if self.booking_time:
+				booking_time = datetime.datetime.combine(datetime.date.today(), self.booking_time)
+				start_time = datetime.datetime.combine(datetime.date.today(), self.start_time)
+				time_diff = start_time - booking_time
+				time_diff = time_diff.total_seconds()
+				time_diff = time_diff/3600
+				time_diff = int(time_diff)
+				self.amount += waiting_fee*time_diff
 		self.save()
 	
-
 
 class Feedback(models.Model):
 	booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="feedbacks")
@@ -111,7 +131,6 @@ class Feedback(models.Model):
 
 	def __str__(self) -> str:
 		return f"{self.booking.customer} {self.booking.date}"
-
 
 
 class Response(models.Model):
