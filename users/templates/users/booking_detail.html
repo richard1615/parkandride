@@ -10,12 +10,14 @@
                 <h6 class="card-subtitle mb-2 text-muted">{{ booking.date }} . {{ booking.booking_time }}</h6>
                 <p class="card-text">Amount: {{ booking.amount }}</p>
                 <p class="card-text">Vehicle: {{ booking.vehicle.name }}</p>
-                {% if booking.start_time %}
+                {% if not booking.is_cancelled %}
                     <p class="card-text">From: {{ booking.start_time }} To: {{ booking.end_time }}</p>
                 {% else %}
                     <p class="card-text">This booking was cancelled</p>
                 {% endif %}
-                <a href="#" class="btn btn-primary">Receipt</a>
+                {% if booking.is_active %}
+                    <a class="btn btn-danger" href="{% url 'cancel' booking.id %}">Cancel</a>
+                {% endif %}
             </div>
         </div>
         <a href="{% url 'feedback-create' booking.id %}" class>
@@ -23,9 +25,9 @@
                 <div class="card-body">
                     <div class="d-flex w-100 justify-content-start">
                         <img src="{% static 'users/feedback.jpg' %}" alt="feedback img"/>
-                                <h5 class="card-title">
-                                    Have something to tell us?
-                                </h5>
+                        <h5 class="card-title">
+                            Have something to tell us?
+                        </h5>
                     </div>   
                 </div>
             </div>

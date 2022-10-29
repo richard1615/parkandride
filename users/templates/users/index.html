@@ -1,9 +1,16 @@
 {% extends "users/base.html" %}
 {% load crispy_forms_tags %}
+
 {% block body %}
   <div class="container mt-5">
+    <div class="alert alert-primary" role="alert">
+      Parking Lot Fee: ${{ prices.parking_fee }}
+    </div>
+    <div class="alert alert-danger" role="alert">
+      Cancellation Fee: ${{ prices.cancellation_fee }}
+    </div>
     <div class="list-group">
-      <div class="list-group-item list-group-item-action">
+      <div class="list-group-item list-group-item-action list-group-item-dark">
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1">{{ customer }}</h5>
         </div>
@@ -19,7 +26,7 @@
   <div class="container mt-5">
     <h2>Current</h2>
     <div class="list-group">
-      <div class="list-group-item">
+      <div class="list-group-item list-group-item-dark">
         {% if messages %}
           {% for message in messages %}
             <div class="alert {% if message.tags %}alert-{% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}danger{% else %}{{ message.tags }}{% endif %}{% endif %}"
@@ -29,28 +36,13 @@
           {% endfor %}
         {% endif %}
         <div class="d-flex w-100 justify-content-between">
-          {% if customer.has_booked and customer.has_occupied %}
-            <h5 class="mb-1">Parking Lot {{ current_booking.parking_spot }}</h5>
-            <a href="{% url 'leave' current_booking.id %}">
-              <button class="btn btn-danger">Leave</button>
-            </a>
-          {% elif customer.has_booked %}
-            <h5 class="mb-1">Please go to parking lot {{ current_booking.parking_spot }}</h5>
-            <a href="{% url 'occupy' current_booking.id %}">
-              <button class="btn btn-primary">Occupy</button>
-            </a>
-            <a href="{% url 'cancel' current_booking.id %}">
-              <button class="btn btn-outline-danger">Cancel</button>
-            </a>
-          {% else %}
-            <h5 class="mb-1">You have not booked a parking lot</h5>
+          <h5 class="mb-1">You have not booked a parking lot</h5>
           </div>
           <form action="{% url 'book' %}" method="post">
             {% csrf_token %}
             {{ vehicle_form|crispy }}
-            <input class="btn btn-primary" value="Book parking lot" type="submit"/>
+            <input class="btn btn-dark" value="Book parking lot" type="submit"/>
           </form>
-        {% endif %}
       </div>
     </div>
   </div>

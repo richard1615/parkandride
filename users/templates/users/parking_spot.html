@@ -3,7 +3,7 @@
 {% block body %}
     <div class="container">
         <h2>{{ parking_spot }}</h2>
-        {% if parking_spot.is_reserved %}
+        {% if parking_spot.is_occupied %}
         <div class="alert alert-danger" role="alert">
             This parking lot is currently occupied
         </div>

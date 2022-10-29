@@ -3,7 +3,7 @@
 
 {% block body %}
     <div class="container mt-5">
-        <h2>History</h2>
+        <h2>Active Bookings</h2>
         <div class="list-group">
             {% for booking in bookings %}
                 <a class="list-group-item list-group-item-action" href="{% if user.is_customer %}{% url 'booking-detail' booking.id %}{% endif %}">
@@ -23,12 +23,8 @@
                                 <div>
                                     <p>Booked by: {{ booking.customer }}</p>
                                 </div>
-                                {% if not booking.is_cancelled %}
-                                    <h6 class="card-subtitle mb-2 text-muted">{{ booking.start_time }} - {{ booking.end_time }}</h6>
-                                {% else %}
-                                    <h6 class="card-subtitle mb-2 text-muted">Booking was cancelled</h6>
-                                {% endif %}
                             {% endif %}
+                            <h6 class="card-subtitle mb-2 text-muted">{{ booking.start_time }} - {{ booking.end_time }}</h6>
                         </div>
                     </div>
                     </a>

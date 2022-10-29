@@ -3,7 +3,7 @@
 {% block body %}
 <div class="container mt-5">
     <h2>Your Vehicles</h2>
-    <a href="{% url 'add-vehicle' %}" class="m-3 btn btn-primary">Add a new vehicle</a>
+    <a href="{% url 'add-vehicle' %}" class="m-3 btn btn-dark">Add a new vehicle</a>
     <div class="list-group">
         {% for vehicle in vehicles %}
           <div class="list-group-item">

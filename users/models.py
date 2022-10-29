@@ -13,13 +13,6 @@ class User(AbstractUser):
 	is_employee = models.BooleanField(default=False)
 
 
-class Price(models.Model):
-	waiting_fee = models.IntegerField(default=waiting_fee)
-	parking_fee = models.IntegerField(default=parking_fee)
-	cancellation_fee = models.IntegerField(default=cancellation_fee)
-	date = models.DateField(default=datetime.datetime.today())
-
-
 class Customer(models.Model):
 	user = models.OneToOneField(
 		User, on_delete=models.CASCADE, related_name="customer")
@@ -30,13 +23,6 @@ class Customer(models.Model):
 		return self.user.username
 
 
-class Prices(models.Model):
-	waiting_fee = models.IntegerField(default=waiting_fee)
-	parking_fee = models.IntegerField(default=parking_fee)
-	cancellation_fee = models.IntegerField(default=cancellation_fee)
-	date = models.DateField(default=datetime.date.today)
-
-
 class Employee(models.Model):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="employee")
@@ -44,6 +30,14 @@ class Employee(models.Model):
     def __str__(self) -> str:
         return self.user.username
 
+class Price(models.Model):
+	waiting_fee = models.IntegerField(default=5)
+	parking_fee = models.IntegerField(default=5)
+	cancellation_fee = models.IntegerField(default=10)
+	date = models.DateField(auto_now_add=True)
+
+	def __str__(self):
+		return f'Waiting Fee: {self.waiting_fee}, Parking Fee: {self.parking_fee}, Cancellation Fee: {self.cancellation_fee}, Date: {self.date}'
 
 class Vehicle(models.Model):
 	customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='vehicles')
@@ -58,8 +52,9 @@ class Vehicle(models.Model):
 class ParkingSpot(models.Model):
 	row = models.CharField(max_length=1, choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D'), ('E', 'E'), ('F', 'F'), ('G', 'G')])
 	column = models.IntegerField(choices=[(i, i) for i in range(1, 11)])
-	is_reserved = models.BooleanField(default=False)
+	is_occupied = models.BooleanField(default=False)
 	vehicle_type = models.CharField(max_length=50, choices=[('car', "Car"), ('two wheeler', "Two Wheeler")], default='car')
+
 
 	def leave(self):
 		self.is_reserved = False
@@ -67,6 +62,13 @@ class ParkingSpot(models.Model):
 
 	def __str__(self) -> str:
 		return f"{self.row}{self.column}"
+
+	def is_available(self, spot, start_time, end_time):
+		bookings = spot.bookings.filter(is_active=True)
+		for booking in bookings:
+			if start_time <= booking.start_time <= end_time or start_time <= booking.end_time <= end_time:
+				return False
+		return True
 
 
 class Booking(models.Model):
@@ -87,17 +89,18 @@ class Booking(models.Model):
 
 	def close(self):
 		self.is_active = False
-		self.end_time = datetime.datetime.now().time()
 		self.save()
 
 	def cancel(self):
-		self.end_time = datetime.datetime.now().time()
+		self.is_cancelled = True
 		self.is_active = False
+		cancellation_fee = Price.objects.last().cancellation_fee
+		self.amount = cancellation_fee
 		self.save()
 
 	
-	def calculate_amount(self):
-		fee_obj = Prices.objects.last()
+	def setAmount(self):
+		fee_obj = Price.objects.last()
 		waiting_fee = fee_obj.waiting_fee
 		parking_fee = fee_obj.parking_fee
 		cancellation_fee = fee_obj.cancellation_fee
@@ -127,7 +130,7 @@ class Feedback(models.Model):
 	booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="feedbacks")
 	comment = models.TextField()
 	is_responded = models.BooleanField(default=False)
-	date_time = models.DateTimeField(default=datetime.datetime.now())
+	date_time = models.DateTimeField(auto_now_add=True)
 
 	def __str__(self) -> str:
 		return f"{self.booking.customer} {self.booking.date}"
@@ -138,7 +141,9 @@ class Response(models.Model):
 	employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="responses")
 	customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="responses")
 	response = models.TextField()
-	date_time = models.DateTimeField(default=datetime.datetime.now())
+	date_time = models.DateTimeField(auto_now_add=True)
 
 	def __str__(self) -> str:
 		return f"{self.feedback.booking.customer} {self.feedback.booking.date}"
+
+

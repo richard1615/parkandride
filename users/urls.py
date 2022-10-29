@@ -7,8 +7,6 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("book", views.book, name="book"),
     path('register/', views.register, name='register'),
-    path("occupy/<id>", views.occupy, name="occupy"),
-    path("leave/<id>", views.leave, name="leave"),
     path("cancel/<id>", views.cancel, name="cancel"),
     path("business/transactions/", views.BookingListView.as_view(), name="transactions"),
     path("business/parking-spot/<pk>", views.ParkingSpotDetailView.as_view(), name="parking-spot"),
@@ -21,4 +19,5 @@ urlpatterns = [
     path("add-vehicle/", views.VehicleCreateView.as_view(), name="add-vehicle"),
     path("booking/<pk>", views.BookingDetailView.as_view(), name="booking-detail"),
     path("business/setprice", views.PriceSetView.as_view(), name="set-price"),
+    path("bookings/active", views.ActiveBookingListView.as_view(), name="active-bookings"),
 ]

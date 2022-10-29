@@ -1,5 +1,6 @@
 import datetime
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView
@@ -18,6 +19,7 @@ def index(request):
         return redirect('transactions')
     else:
         customer = request.user.customer
+        prices = Price.objects.last()
         bookings = customer.bookings.filter(
             is_active=False).order_by('-date', '-booking_time')
         current_booking = customer.bookings.filter(is_active=True).first()
@@ -26,16 +28,9 @@ def index(request):
             "customer": customer,
             "bookings": bookings,
             "current_booking": current_booking,
-            "vehicle_form": BookingForm()
+            "vehicle_form": BookingForm(),
+            "prices": prices
         })
-
-
-@login_required(login_url='login')
-def parking_lots(request):
-    spots = ParkingSpot.objects.all()
-    return render(request, "users/parking_lots.html", {
-        "spots": spots,
-    })
 
 
 @login_required(login_url='login')
@@ -45,53 +40,32 @@ def book(request):
         form = BookingForm(request.POST)
         if form.is_valid():
             vehicle = form.cleaned_data["vehicle"]
+            start_time = form.cleaned_data["start_time"]
+            end_time = form.cleaned_data["end_time"]
         else:
             return form.errors.as_data()
-        spot = ParkingSpot.objects.filter(
-            is_reserved=False, vehicle_type=vehicle.vehicle_type).first()
-        if spot:
-            customer.has_booked = True
-            customer.save()
-            spot.is_reserved = True
-            spot.save()
-            Booking.objects.create(
-                customer=customer,
-                date=datetime.date.today(),
-                booking_time=datetime.datetime.now().time(),
-                parking_spot=spot,
-                vehicle=vehicle
-            )
-            messages.success(request, "Parking lot allotted succesfully")
-        else:
-            messages.error(
-                request, "No parking spot available for your vehicle type")
-    return redirect("index")
-
-
-@login_required(login_url='login')
-def occupy(request, id):
-    booking = Booking.objects.get(id=id)
-    customer = booking.customer
-    customer.has_occupied = True
-    customer.save()
-    booking.is_active = True
-    booking.start_time = datetime.datetime.now().time()
-    booking.save()
-    return redirect("index")
-
-
-@login_required(login_url='login')
-def leave(request, id):
-    customer = request.user.customer
-    customer.has_booked = False
-    customer.has_occupied = False
-    customer.save()
-    booking = Booking.objects.get(id=id)
-    booking.close()
-    booking.setAmount()
-    spot = booking.parking_spot
-    spot.leave()
-    return redirect("index")
+        spots = ParkingSpot.objects.filter(vehicle_type=vehicle.vehicle_type)
+        for spot in spots:
+            if spot.is_available(spot, start_time, end_time):
+                booking = Booking.objects.create(
+                    customer=customer,
+                    parking_spot=spot,
+                    vehicle=vehicle,
+                    date=datetime.date.today(),
+                    booking_time=datetime.datetime.now().time(),
+                    start_time=start_time,
+                    end_time=end_time,
+                    is_active=True
+                )
+                booking.setAmount()
+                customer.has_booked = True
+                customer.save()
+                messages.success(request, "Parking lot allotted succesfully")
+            else:
+                messages.error(
+                    request, "No parking spot available for your vehicle type")
+        return redirect('index')
+    return redirect('index')
 
 
 @login_required(login_url='login')
@@ -129,9 +103,9 @@ class BookingListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         if self.request.user.is_employee:
-            return Booking.objects.order_by('-date', '-booking_time')
+            return Booking.objects.filter(is_active=False).order_by('-date', '-booking_time')
         else:
-            return Booking.objects.filter(customer=self.request.user.customer).order_by('-date', '-booking_time')
+            return Booking.objects.filter(customer=self.request.user.customer, is_active=False).order_by('-date', '-booking_time')
 
 class BookingDetailView(LoginRequiredMixin, DetailView):
     model = Booking
@@ -249,6 +223,7 @@ class VehicleCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     login_url = 'login/'
     redirect_field_name = 'redirect_to'
     fields = ['name', 'license_no', 'vehicle_type']
+    template_name = "users/price_set.html"
 
     def test_func(self):
         return self.request.user.is_customer
@@ -278,6 +253,7 @@ class PriceSetView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Price
     login_url = 'login/'
     redirect_field_name = 'redirect_to'
+    template_name = "users/price_set.html"
 
     def test_func(self):
         return self.request.user.is_employee
@@ -288,4 +264,18 @@ class PriceSetView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super(PriceSetView, self).get_context_data(**kwargs)
         context['form'] = PriceForm()
-        return super().get_context_data(**kwargs)
+        return context
+
+
+class ActiveBookingListView(LoginRequiredMixin, ListView):
+    model = Booking
+    login_url = 'login/'
+    redirect_field_name = 'redirect_to'
+    template_name = "users/active_bookings.html"
+    context_object_name = 'bookings'
+
+    def get_queryset(self):
+        if self.request.user.is_customer:
+            return Booking.objects.filter(is_active=True, customer=self.request.user.customer).order_by('-date', '-booking_time')
+        else:
+            return Booking.objects.filter(is_active=True).order_by('-date', '-booking_time')
