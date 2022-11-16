@@ -10,7 +10,7 @@ from django.contrib import messages
 
 
 from .models import Booking, Feedback, ParkingSpot, Feedback, Response, Vehicle, Price
-from .forms import UserRegisterForm, SearchParkingLotForm, BookingForm, PriceForm
+from .forms import UserRegisterForm, SearchParkingLotForm, BookingForm
 
 
 @login_required(login_url='login')
@@ -61,11 +61,10 @@ def book(request):
                 customer.has_booked = True
                 customer.save()
                 messages.success(request, "Parking lot allotted succesfully")
-            else:
-                messages.error(
-                    request, "No parking spot available for your vehicle type")
+                return redirect('index')
+        messages.error(
+            request, "No parking spot available for your vehicle type")
         return redirect('index')
-    return redirect('index')
 
 
 @login_required(login_url='login')
@@ -126,7 +125,7 @@ class ParkingSpotDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView)
     def get_context_data(self, **kwargs):
         context = super(ParkingSpotDetailView, self).get_context_data(**kwargs)
         bookings = ParkingSpot.objects.get(
-            id=self.kwargs['pk']).bookings.order_by('-date', '-booking_time')
+            id=self.kwargs['pk']).bookings.filter(is_cancelled=False).order_by('-date', '-booking_time')
         context['bookings'] = bookings
         return context
 
@@ -249,9 +248,10 @@ class VehicleListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return self.request.user.is_customer
 
 
-class PriceSetView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+class PriceSetView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Price
     login_url = 'login/'
+    fields = ["waiting_fee", "parking_fee", "cancellation_fee"]
     redirect_field_name = 'redirect_to'
     template_name = "users/price_set.html"
 
@@ -259,12 +259,8 @@ class PriceSetView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return self.request.user.is_employee
 
     def get_success_url(self) -> str:
+        messages.success(self.request, "Price set succesfully")
         return reverse('set-price')
-
-    def get_context_data(self, **kwargs):
-        context = super(PriceSetView, self).get_context_data(**kwargs)
-        context['form'] = PriceForm()
-        return context
 
 
 class ActiveBookingListView(LoginRequiredMixin, ListView):

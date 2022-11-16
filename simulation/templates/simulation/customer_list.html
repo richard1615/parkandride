@@ -1,0 +1,26 @@
+{% extends "users/base.html" %}
+
+{% block body %}{% if messages %}
+    {% for message in messages %}
+    <div class="alert {% if message.tags %}alert-{% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}danger{% else %}{{ message.tags }}{% endif %}{% endif %}"
+        role="alert">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    <div class="">
+        {% for customer in customers %}
+            <div class="list-group-item container">
+                <div class="d-flex w-100 justify-content-between">
+                    <h3>{{ customer.user.username }}</h3>
+                </div>
+                    <p>{{ customer.user.email }}</p>
+                    {% if customer.has_occupied %}
+                        <a href="{% url 'leave' customer.user.id %}" class="btn btn-danger">leave</a>
+                    {% else %}
+                        <a href="{% url 'occupy' customer.user.id %}" class="btn btn-info">Occupy</a> 
+                    {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% endblock body %}

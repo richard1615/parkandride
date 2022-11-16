@@ -22,9 +22,3 @@ class BookingForm(forms.ModelForm):
         model = Booking
         fields = ["vehicle", "start_time", "end_time"]
         
-    
-class PriceForm(forms.ModelForm):
-    
-    class Meta:
-        model = Price
-        fields = ["waiting_fee", "parking_fee", "cancellation_fee"]

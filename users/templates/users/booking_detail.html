@@ -5,7 +5,7 @@
     <div class="container">
         <h3>Booking Details</h3>
         <div class="card">
-            <div class="card-body">
+            <div class="card-body text-dark">
                 <h5 class="card-title">You booked {{ booking.parking_spot }}</h5>
                 <h6 class="card-subtitle mb-2 text-muted">{{ booking.date }} . {{ booking.booking_time }}</h6>
                 <p class="card-text">Amount: {{ booking.amount }}</p>
@@ -22,7 +22,7 @@
         </div>
         <a href="{% url 'feedback-create' booking.id %}" class>
             <div class="card mt-3">
-                <div class="card-body">
+                <div class="card-body text-dark">
                     <div class="d-flex w-100 justify-content-start">
                         <img src="{% static 'users/feedback.jpg' %}" alt="feedback img"/>
                         <h5 class="card-title">

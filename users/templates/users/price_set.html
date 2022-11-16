@@ -3,6 +3,14 @@
 
 {% block body %}
 <div class="container">
+    {% if messages %}
+          {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}danger{% else %}{{ message.tags }}{% endif %}{% endif %}"
+                 role="alert">
+              {{ message }}
+            </div>
+          {% endfor %}
+    {% endif %}
     <form action="" method="post">
         {% csrf_token %}
         {{ form|crispy }}

@@ -80,6 +80,7 @@ class Booking(models.Model):
 	end_time = models.TimeField(null = True, blank = True)
 	is_active = models.BooleanField(default=True)
 	is_cancelled = models.BooleanField(default=False)
+	is_occupied = models.BooleanField(default=False)
 	parking_spot = models.ForeignKey(ParkingSpot, related_name="bookings", on_delete=models.CASCADE)
 	vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name="vehicle", null=True, blank=False)
 	amount = models.IntegerField(default=0)
@@ -89,13 +90,24 @@ class Booking(models.Model):
 
 	def close(self):
 		self.is_active = False
+		self.is_occupied = False
+		self.customer.has_occupied = False
+		self.customer.save()
 		self.save()
+
 
 	def cancel(self):
 		self.is_cancelled = True
 		self.is_active = False
 		cancellation_fee = Price.objects.last().cancellation_fee
 		self.amount = cancellation_fee
+		self.save()
+
+	
+	def occupy(self):
+		self.is_occupied = True
+		self.customer.has_occupied = True
+		self.customer.save()
 		self.save()
 
 	
@@ -110,19 +122,13 @@ class Booking(models.Model):
 			if self.start_time:
 				start_time = datetime.datetime.combine(datetime.date.today(), self.start_time)
 				end_time = datetime.datetime.combine(datetime.date.today(), self.end_time)
-				time_diff = end_time - start_time
-				time_diff = time_diff.total_seconds()
-				time_diff = time_diff/3600
-				time_diff = int(time_diff)
+				time_diff = abs((end_time - start_time).total_seconds()//3600)
 				self.amount += parking_fee*time_diff
 			if self.booking_time:
 				booking_time = datetime.datetime.combine(datetime.date.today(), self.booking_time)
 				start_time = datetime.datetime.combine(datetime.date.today(), self.start_time)
-				time_diff = start_time - booking_time
-				time_diff = time_diff.total_seconds()
-				time_diff = time_diff/3600
-				time_diff = int(time_diff)
-				self.amount += waiting_fee*time_diff
+				time_diff = (start_time - booking_time).total_seconds()//3600
+				self.amount += abs(waiting_fee*time_diff)
 		self.save()
 	
 

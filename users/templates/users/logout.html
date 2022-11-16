@@ -1,6 +1,8 @@
 {% extends 'users/base-login.html' %}
 
 {% block body %}
-<h1>You have succesfully logged out</h1>
-<h6><a href="{% url 'login' %}">Login Again</a></h6>
+<div class="container mt-5">
+    <h1 style="color: white">You have succesfully logged out</h1>
+    <h6><a href="{% url 'login' %}" style="color: white">Login Again</a></h6>
+</div>
 {% endblock body %}
