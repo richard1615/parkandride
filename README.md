@@ -1,6 +1,13 @@
 # Park and Ride
 
-# Instructions to run
+# Quick start
+
+Please make sure that python is installed in your system
+Extract the zip file to an appropriate location
+Click on start.exe
+Reload the page after one - two minutes if it doesn't load on first try
+
+# Set up and Install
 
 Extract the zip file to an appropriate location
 Run the following commands in the terminal (in windows)
